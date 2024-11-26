@@ -19,8 +19,8 @@ include "koneksi.php";
     <div class="container">
 
         <div class="mt-3">
-            <h3 class="text-center">CRUD DATA USER</h3>
-            <h3 class="text-center">Percobaan Tugas Akhir</h3>
+            <h3 class="text-center">DATA PENERIMA BANTUAN</h3>
+            <h3 class="text-center">Dinas Sosial</h3>
         </div>
         <div class="card mt-3">
             <div class="card-header bg-primary text-white">

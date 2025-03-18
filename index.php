@@ -1,226 +1,90 @@
-<?php 
+<?php
+session_start();
+if (!isset($_SESSION['login'])) {
+    header('location:login.php');
+    exit;
+}
 
-//Panggil Koneksi Database
-include "koneksi.php";
+require 'function.php';
+
+// Generate kunci Diffie-Hellman
+$keys = generate_diffie_hellman_keys();
+$dh = $keys['dh']; // Resource Diffie-Hellman
+$peer_public_key = $keys['public_key']; // Contoh: menggunakan kunci publik sendiri
+
+// Hitung shared secret
+$shared_secret = generate_shared_secret($dh, $peer_public_key);
+
+// Simpan shared secret di session
+$_SESSION['shared_secret'] = $shared_secret;
+
+// Ambil data mahasiswa dari database
+$mahasiswa = query("SELECT * FROM mahasiswa");
+
+// Jika query gagal, tampilkan pesan error
+if ($mahasiswa === false) {
+    die("Error: Gagal mengambil data dari database.");
+}
 ?>
-<!doctype html>
+
+<!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>CRUD DATA USER</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Penerima Beasiswa</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-
 <body>
-
-    <div class="container">
-
-        <div class="mt-3">
-            <h3 class="text-center">DATA PENERIMA BANTUAN</h3>
-            <h3 class="text-center">Dinas Sosial</h3>
-        </div>
-        <div class="card mt-3">
-            <div class="card-header bg-primary text-white">
-                Data User
-            </div>
-            <div class="card-body">
-
-                <!-- Button trigger modal -->
-                <button type="button" class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#modaltambah">
-                    Tambah Data User
-                </button>
-
-
-                <table class="table table-bordered table-striped table-hover">
+    <div class="container mt-4">
+        <h2>Data Penerima Beasiswa</h2>
+        <a href="addData.php" class="btn btn-primary mb-3">Tambah Data</a>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Nama</th>
+                    <th>NIM</th>
+                    <th>Tempat Lahir</th>
+                    <th>Tanggal Lahir</th>
+                    <th>Jenis Kelamin</th>
+                    <th>Universitas</th>
+                    <th>Program Studi</th>
+                    <th>Nomor Rekening</th>
+                    <th>Nomor HP</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (empty($mahasiswa)) : ?>
                     <tr>
-                        <th>No</th>
-                        <th>Nama</th>
-                        <th>NIK</th>
-                        <th>Nomor HP</th>
-                        <th>Instansi</th>
-                        <th>Domisili</th>
-                        <th>Aksi</th>
+                        <td colspan="12" class="text-center">Tidak ada data.</td>
                     </tr>
-
-                    <?php
-                    //Persiapa Menampilkan Data
-                    $no = 1;
-                    $tampil = mysqli_query($koneksi, "SELECT * FROM user ORDER BY id_usr DESC");
-                    while($data = mysqli_fetch_array($tampil)):
-                    ?>
-
-                    <tr>
-                        <td><?= $no++ ?></td>
-                        <td><?=$data['nama']?></td>
-                        <td><?=$data['nik']?></td>
-                        <td><?=$data['nomor_hp']?></td>
-                        <td><?=$data['instansi']?></td>
-                        <td><?=$data['domisili']?></td>
-                        <td>
-                            <a href="#"class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#modalEdit<?=$no?>">Edit</a>
-                            <a href="#"class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalHapus<?=$no?>">Hapus</a>
-                        </td>
-                    </tr>
-
-                <!-- Awal Modal Edit -->
-                <div class="modal fade" id="modalEdit<?=$no?>" data-bs-backdrop="static" data-bs-keyboard="false"
-                    tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title fs-5" id="staticBackdropLabel">Form Data User</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
-                            </div>
-                            <form method="POST" action="aksi_crud.php">
-                                <input type="hidden" name="id_usr"value="<?= $data['id_usr']?> ">
-                                <div class="modal-body">
-                                    <div class="mb-3">
-                                        <label class="form-label">Nama</label>
-                                        <input type="text" class="form-control" name="tnama" value="<?=$data['nama']?>"
-                                            placeholder="Masukkan Nama Anda!">
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label class="form-label">NIK</label>
-                                        <input type="text" class="form-control" name="tnik"value="<?=$data['nik']?>"
-                                            placeholder="Masukkan NIK Anda!">
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label class="form-label">Nomor HP</label>
-                                        <input type="text" class="form-control" name="tnomorhp"value="<?=$data['nomor_hp']?>" placeholder="Nomor HP">
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label class="form-label">Instansi</label>
-                                        <select class="form-select" name="tinstansi">
-                                            <option value="<?=$data['instansi']?>"><?=$data['instansi']?></option>
-                                            <option value="Perguruan Tinggi">Perguruan Tinggi</option>
-                                            <option value="Perusahaan Swasta">Perusahaan Swasta</option>
-                                            <option value="Pemerintahan">Pemerintahan</option>
-                                        </select>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Domisili</label>
-                                        <textarea class="form-control" name="tdomisili" rows="3"><?=$data['domisili']?></textarea>
-                                    </div>
-                                </div>
-
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Tutup</button>
-                                    <button type="submit" class="btn btn-success" name="bedit">Edit</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-                <!-- Akhir Modal Edit-->
-                  
-
-                <!-- Awal Modal Hapus -->
-                <div class="modal fade" id="modalHapus<?=$no?>" data-bs-backdrop="static" data-bs-keyboard="false"
-                    tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title fs-5" id="staticBackdropLabel">Konfirmasi Hapus Data</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
-                            </div>
-                            <form method="POST" action="aksi_crud.php">
-                                <input type="hidden" name="id_usr"value="<?= $data['id_usr']?> ">
-                                <div class="modal-body">
-                                    <h5 class="text-center"> Apakah Anda Yakin Untuk Menghapus Data berikut?<br>
-                                    <span class="text-danger"><?= $data['nama']?> - <?= $data['nik']?>
-                                </span>
-                                </h5>
-                                    
-                                </div>
-
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Tutup</button>
-                                    <button type="submit" class="btn btn-success" name="bhapus">Hapus</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-                <!-- Akhir Modal Hapus-->
-                    <?php endwhile;?>
-                </table>
-
-
-                <!-- Awal Modal Tambah -->
-                <div class="modal fade" id="modaltambah" data-bs-backdrop="static" data-bs-keyboard="false"
-                    tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title fs-5" id="staticBackdropLabel">Form Data User</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
-                            </div>
-                            <form method="POST" action="aksi_crud.php">
-                                <div class="modal-body">
-                                    <div class="mb-3">
-                                        <label class="form-label">Nama</label>
-                                        <input type="text" class="form-control" name="tnama"
-                                            placeholder="Masukkan Nama Anda!">
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label class="form-label">NIK</label>
-                                        <input type="text" class="form-control" name="tnik"
-                                            placeholder="Masukkan NIK Anda!">
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label class="form-label">Nomor HP</label>
-                                        <input type="text" class="form-control" name="tnomorhp" placeholder="Nomor HP">
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label class="form-label">Instansi</label>
-                                        <select class="form-select" name="tinstansi">
-                                            <option></option>
-                                            <option value="Perguruan Tinggi">Perguruan Tinggi</option>
-                                            <option value="Perusahaan Swasta">Perusahaan Swasta</option>
-                                            <option value="Pemerintahan">Pemerintahan</option>
-                                        </select>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Domisili</label>
-                                        <textarea class="form-control" name="tdomisili" rows="3">
-
-                                        </textarea>
-                                    </div>
-                                </div>
-
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Tutup</button>
-                                    <button type="submit" class="btn btn-success" name="btambah">Tambah</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-                <!-- Akhir Modal Tambah-->
-            </div>
-        </div>
+                <?php else : ?>
+                    <?php $no = 1; ?>
+                    <?php foreach ($mahasiswa as $row) : ?>
+                        <tr>
+                            <td><?= $no++; ?></td>
+                            <td><?= htmlspecialchars($row['nama']); ?></td>
+                            <td><?= htmlspecialchars($row['nim']); ?></td>
+                            <td><?= htmlspecialchars($row['tempat_lahir']); ?></td>
+                            <td><?= htmlspecialchars($row['tanggal_lahir']); ?></td>
+                            <td><?= htmlspecialchars($row['jenis_kelamin']); ?></td>
+                            <td><?= htmlspecialchars($row['universitas']); ?></td>
+                            <td><?= htmlspecialchars($row['program_studi']); ?></td>
+                            <td><?= dekripsi_blowfish($row['nomor_rekening'], $shared_secret); ?></td>
+                            <td><?= dekripsi_blowfish($row['nomor_hp'], $shared_secret); ?></td>
+                            <td><?= htmlspecialchars($row['status']); ?></td>
+                            <td>
+                                <a href="ubah.php?id=<?= $row['id']; ?>" class="btn btn-warning btn-sm">Edit</a>
+                                <a href="hapus.php?id=<?= $row['id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Yakin ingin menghapus?');">Hapus</a>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
     </div>
-
-
-
-
-
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-        crossorigin="anonymous"></script>
 </body>
-
 </html>
